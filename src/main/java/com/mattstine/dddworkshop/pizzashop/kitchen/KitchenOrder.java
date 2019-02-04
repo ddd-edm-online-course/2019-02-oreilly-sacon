@@ -1,5 +1,6 @@
 package com.mattstine.dddworkshop.pizzashop.kitchen;
 
+import com.mattstine.dddworkshop.pizzashop.infrastructure.events.adapters.InProcessEventLog;
 import com.mattstine.dddworkshop.pizzashop.infrastructure.events.ports.EventLog;
 import com.mattstine.dddworkshop.pizzashop.infrastructure.events.ports.Topic;
 import com.mattstine.dddworkshop.pizzashop.infrastructure.repository.ports.Aggregate;
@@ -106,7 +107,11 @@ public final class KitchenOrder implements Aggregate {
 
     @Override
     public KitchenOrder identity() {
-        return null;
+        return KitchenOrder.builder()
+                .ref(KitchenOrderRef.IDENTITY)
+                .eventLog(EventLog.IDENTITY)
+                .onlineOrderRef(OnlineOrderRef.IDENTITY)
+                .build();
     }
 
     @Override
@@ -131,7 +136,28 @@ public final class KitchenOrder implements Aggregate {
 
         @Override
         public KitchenOrder apply(KitchenOrder kitchenOrder, KitchenOrderEvent kitchenOrderEvent) {
-            return null;
+            if (kitchenOrderEvent instanceof KitchenOrderAddedEvent) {
+                KitchenOrderAddedEvent koae = (KitchenOrderAddedEvent) kitchenOrderEvent;
+                return KitchenOrder.builder()
+                        .onlineOrderRef(koae.getState().getOnlineOrderRef())
+                        .eventLog(InProcessEventLog.instance())
+                        .pizzas(koae.getState().getPizzas())
+                        .ref(koae.getRef())
+                        .build();
+            } else if (kitchenOrderEvent instanceof KitchenOrderPrepStartedEvent) {
+                kitchenOrder.state = State.PREPPING;
+                return kitchenOrder;
+            } else if (kitchenOrderEvent instanceof KitchenOrderBakeStartedEvent) {
+                kitchenOrder.state = State.BAKING;
+                return kitchenOrder;
+            } else if (kitchenOrderEvent instanceof KitchenOrderAssemblyStartedEvent) {
+                kitchenOrder.state = State.ASSEMBLING;
+                return kitchenOrder;
+            } else if (kitchenOrderEvent instanceof KitchenOrderAssemblyFinishedEvent) {
+                kitchenOrder.state = State.ASSEMBLED;
+                return kitchenOrder;
+            }
+            throw new IllegalArgumentException("Unknown KitchenOrderEvent type!");
         }
 
     }
