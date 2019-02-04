@@ -120,7 +120,7 @@ public final class Pizza implements Aggregate {
 
     @Override
     public PizzaState state() {
-        return null;
+        return new PizzaState(ref, kitchenOrderRef, size);
     }
 
     enum Size {
@@ -145,5 +145,8 @@ public final class Pizza implements Aggregate {
 
     @Value
     static class PizzaState implements AggregateState {
+        PizzaRef ref;
+        KitchenOrderRef kitchenOrderRef;
+        Size size;
     }
 }
