@@ -20,9 +20,11 @@ final class InProcessEventSourcedPizzaRepository extends InProcessEventSourcedRe
         index = new HashMap<>();
 
         eventLog.subscribe(topic, e -> {
-            PizzaAddedEvent pae = (PizzaAddedEvent) e;
-            Set<PizzaRef> pizzaRefs = index.computeIfAbsent(pae.getState().getKitchenOrderRef(), k -> new HashSet<>());
-            pizzaRefs.add(pae.getRef());
+            if (e instanceof PizzaAddedEvent) {
+                PizzaAddedEvent pae = (PizzaAddedEvent) e;
+                Set<PizzaRef> pizzaRefs = index.computeIfAbsent(pae.getState().getKitchenOrderRef(), k -> new HashSet<>());
+                pizzaRefs.add(pae.getRef());
+            }
         });
     }
 
